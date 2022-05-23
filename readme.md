@@ -10,7 +10,7 @@ Foi o nosso 1º contacto com CTF's! Portanto as nossas soluções **não são as
 - Pontos: 1760
 - Equipa: 888海日人,,
     - [roby](https://github.com/roby2014)
-    - [mura](https://github.com/)
+    - [mura](https://github.com/muraa1)
     - [kardoso](https://github.com/diogocardoso28)
     - [sn0wygecko](https://github.com/eduardoervideira) 
 
@@ -25,7 +25,7 @@ Foi o nosso 1º contacto com CTF's! Portanto as nossas soluções **não são as
 ### rev
 - Introdução GDB [[Solução]](#introdução-gdb)
 - Estás a olhar? [[Solução]](#estás-a-olhar)
-- Nunca me Reverás [[Solved]](#)
+- Nunca me Reverás [[Solved]](#nunca-me-reverás)
 - Rede Neuronal Personalizada
 - Encontra o Caminho
 
@@ -230,6 +230,111 @@ Portanto, olhei para `mov    DWORD PTR [rbp-0x12],0x7b5348` e fui converter `0x7
 Flag: `{HS{w41t_s0_str1ngs_w0rks_0r_n0t???}`
 
 Acabei por descobrir no final da competição que era só executar `strings -n 2` LOL.
+
+
+## Nunca me Reverás
+
+```bash
+$ ./reveras
+Vamos lá rever a pass! Dá input:
+ola
+Ui má revisão
+```
+
+`strings` e `objdump` não me ajudaram muito neste caso, também porque o meu conhecimento de assembly é limitado e este challenge parecia ligeiramente mais díficil, portanto recorri ao meu IDA e converti isto para C.
+
+A função main ficou algo deste género:
+```c
+int __cdecl main(int argc, const char **argv, const char **envp) 
+{
+    int i; // [rsp+4h] [rbp-5Ch]
+    int v6; // [rsp+8h] [rbp-58h]
+    char v7[32]; // [rsp+10h] [rbp-50h] BYREF
+    char v8[40]; // [rsp+30h] [rbp-30h] BYREF
+    unsigned __int64 v9; // [rsp+58h] [rbp-8h]
+
+    v9 = __readfsqword(0x28u);
+    puts(s);
+    __isoc99_scanf("%s", v7);
+    strcpy(v8, "jv>,247<DQf(_X(QJl'd\\1^`/`p");
+
+    for ( i = 0; i <= 26; ++i )
+    {
+        v6 = v7[i];
+        if ( (int)(next(i) + v6) % 96 + 34 != v8[i] )
+        {
+            printf("Ui má revisão");
+            exit(0);
+        }
+    }
+
+    printf("Password revista!!!!!!!!! Esta certo :)");
+    return __readfsqword(0x28u) ^ v9;
+}
+```
+
+Um bocado confuso, mas a parte mais importante aqui é o loop:
+```c
+for ( i = 0; i <= 26; ++i )
+{
+    v6 = v7[i];
+    if ( (int)(next(i) + v6) % 96 + 34 != v8[i] )
+    {
+        printf("Ui má revisão");
+        exit(0);
+    }
+}
+``` 
+
+e a função `next`:
+```c
+__int64 __fastcall next(int a1) {
+    int v2; // ebx
+    if (a1 <= 1)
+        return (unsigned int)a1;
+    v2 = next((unsigned int)(a1 - 1));
+    return v2 + (unsigned int)next((unsigned int)(a1 - 2));
+}
+```
+
+Este loop verifica letra a letra da nossa chave se corresponde ao que é suposto, se não corresponder, o programa acaba.
+Já conseguimos perceber que
+- `v7` é o nosso input
+- `(int)(next(i) + v6) % 96 + 34 != v8[i]` é a "fórmula mágica"
+- `v8` tem alguma ligação com a fórmula e a flag
+- A chave tem 26+1 bytes
+
+O melhor que consegui pensar foi, dividir a fórmula mágica, e fazer um bruteforce em todas os chars possíveis e verificar se é igual ao que é suposto ser (`v8[i]`).
+Ficou algo deste género:
+```c
+for (int i = 0; i <= 26; ++i)
+    {
+        v6 = input[i];
+        auto n = (int)(next(i));
+
+        int count = 0; // obter só o primeiro char
+        for (int j = 0; j < 256; j++)
+        {
+            auto a = n + j;
+            auto b = a % 96;
+            auto c = b + 34;
+
+            if (c == v8[i])
+            {
+                if (count == 1)
+                {
+                    printf("%c", j);
+                    break;
+                }
+                count++;
+            }
+        }
+    }
+```
+
+Flag: `��{hmmmmmmmmmmmmmmmmmmmmmm}`
+
+Não sei porquê é que a parte inicial aparece assim, mas o importante é que a flag funcionou!
 
 ## pwn
 ### Borda Fora

@@ -29,6 +29,9 @@ Foi o nosso 1º contacto com CTF's! Portanto as nossas soluções **não são as
 - Rede Neuronal Personalizada
 - Encontra o Caminho
 
+### pwn
+- Borda Fora [[Solução]](#borda-fora)
+
 ### web
 - Concurso HS Infantil [[Solved]](#)
 - Donald [[Solved]](#)
@@ -41,9 +44,6 @@ Foi o nosso 1º contacto com CTF's! Portanto as nossas soluções **não são as
 - Atividades do RAM [[Solved]](#)
 - RAM Fugitivo [[Solved]](#)
   
-### pwn
-- Borda Fora [[Solved]](#)
-
 ### misc
 - Sanity check [[Solved]](#)
 - Amigos Dobráveis [[Solved]](#)

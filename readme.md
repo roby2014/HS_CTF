@@ -5,6 +5,7 @@
 
 ## Info
 Este repo contem alguns writeups das nossas soluções nas CTF's da HS.
+Foi o nosso 1º contacto com CTF's! Portanto as nossas soluções **não são as melhores**.
 - Lugar (equipa): 5º
 - Pontos: 1760
 - Equipa: 888海日人,,
@@ -65,7 +66,8 @@ Este repo contem alguns writeups das nossas soluções nas CTF's da HS.
 
 # Soluções
 
-## Introdução GDB
+## rev
+### Introdução GDB
 ![challenge](/assets/introducao_gdb.png)
 
 ```
@@ -158,7 +160,7 @@ Se metermos um breakpoint antes de saltar (`b *0x0000555555555211`), podemos obs
 ![challenge](/assets/introducao_gdb_2.png)
 Boom, a string está vísivel no stack.
 
-## Estás a olhar?
+### Estás a olhar?
 ![challenge](/assets/estas_a_olhar.png)
 
 ```
@@ -229,3 +231,124 @@ Resultado final: `{HS{w41t_s0_str1ngs_w0rks_0r_n0t???}`
 
 Acabei por descobrir no final da competição que era só executar `strings -n 2` LOL.
 
+
+## pwn
+### Borda Fora
+![challenge](/assets/borda_fora.png)
+
+```
+Bem-vindos a um desafio de buffer overflow!
+Primeiro é tentar compilar o binário com gcc e ver os avisos que mostra
+Qual é o problema destas funções?
+Há outra função neste desafio que pode ser útil :)
+aaa
+```
+
+Ok, este foi engraçado, o objetivo é dar buffer overflow pelos vistos.
+O comando `strings` não ajudou, portanto, fui direto para o disassembly.
+`objdump borda_fora -d -M intel` mostra me o seguinte:
+```
+0000000000400757 <funcao_nada_suspeita>:
+  400757:	55                   	push   rbp
+  400758:	48 89 e5             	mov    rbp,rsp
+  40075b:	48 83 ec 10          	sub    rsp,0x10
+  40075f:	48 8d 3d 82 01 00 00 	lea    rdi,[rip+0x182]        # 4008e8 <_IO_stdin_used+0x8>
+  400766:	e8 85 fe ff ff       	call   4005f0 <puts@plt>
+  40076b:	bf 64 00 00 00       	mov    edi,0x64
+  400770:	e8 bb fe ff ff       	call   400630 <malloc@plt>
+  400775:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
+  400779:	be 00 00 00 00       	mov    esi,0x0
+  40077e:	48 8d 3d 6c 01 00 00 	lea    rdi,[rip+0x16c]        # 4008f1 <_IO_stdin_used+0x11>
+  400785:	b8 00 00 00 00       	mov    eax,0x0
+  40078a:	e8 c1 fe ff ff       	call   400650 <open@plt>
+  40078f:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
+  400792:	48 8b 4d f8          	mov    rcx,QWORD PTR [rbp-0x8]
+  400796:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
+  400799:	ba 64 00 00 00       	mov    edx,0x64
+  40079e:	48 89 ce             	mov    rsi,rcx
+  4007a1:	89 c7                	mov    edi,eax
+  4007a3:	e8 68 fe ff ff       	call   400610 <read@plt>
+  4007a8:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
+  4007ac:	ba 64 00 00 00       	mov    edx,0x64
+  4007b1:	48 89 c6             	mov    rsi,rax
+  4007b4:	bf 01 00 00 00       	mov    edi,0x1
+  4007b9:	e8 42 fe ff ff       	call   400600 <write@plt>
+  4007be:	bf 39 05 00 00       	mov    edi,0x539
+  4007c3:	e8 98 fe ff ff       	call   400660 <exit@plt>
+
+00000000004007c8 <main>:
+  4007c8:	55                   	push   rbp
+  4007c9:	48 89 e5             	mov    rbp,rsp
+  4007cc:	48 83 ec 50          	sub    rsp,0x50
+  4007d0:	48 8b 05 a9 08 20 00 	mov    rax,QWORD PTR [rip+0x2008a9]        # 601080 <stdin@GLIBC_2.2.5>
+  4007d7:	b9 00 00 00 00       	mov    ecx,0x0
+  4007dc:	ba 02 00 00 00       	mov    edx,0x2
+  4007e1:	be 00 00 00 00       	mov    esi,0x0
+  4007e6:	48 89 c7             	mov    rdi,rax
+  4007e9:	e8 52 fe ff ff       	call   400640 <setvbuf@plt>
+  4007ee:	48 8b 05 7b 08 20 00 	mov    rax,QWORD PTR [rip+0x20087b]        # 601070 <stdout@GLIBC_2.2.5>
+  4007f5:	b9 00 00 00 00       	mov    ecx,0x0
+  4007fa:	ba 02 00 00 00       	mov    edx,0x2
+  4007ff:	be 00 00 00 00       	mov    esi,0x0
+  400804:	48 89 c7             	mov    rdi,rax
+  400807:	e8 34 fe ff ff       	call   400640 <setvbuf@plt>
+  40080c:	48 8d 3d ed 00 00 00 	lea    rdi,[rip+0xed]        # 400900 <_IO_stdin_used+0x20>
+  400813:	e8 d8 fd ff ff       	call   4005f0 <puts@plt>
+  400818:	48 8d 3d 11 01 00 00 	lea    rdi,[rip+0x111]        # 400930 <_IO_stdin_used+0x50>
+  40081f:	e8 cc fd ff ff       	call   4005f0 <puts@plt>
+  400824:	48 8d 3d 55 01 00 00 	lea    rdi,[rip+0x155]        # 400980 <_IO_stdin_used+0xa0>
+  40082b:	e8 c0 fd ff ff       	call   4005f0 <puts@plt>
+  400830:	48 8d 3d 71 01 00 00 	lea    rdi,[rip+0x171]        # 4009a8 <_IO_stdin_used+0xc8>
+  400837:	e8 b4 fd ff ff       	call   4005f0 <puts@plt>
+  40083c:	48 8d 45 b0          	lea    rax,[rbp-0x50]
+  400840:	48 89 c7             	mov    rdi,rax
+  400843:	b8 00 00 00 00       	mov    eax,0x0
+  400848:	e8 d3 fd ff ff       	call   400620 <gets@plt>
+  40084d:	b8 00 00 00 00       	mov    eax,0x0
+  400852:	c9                   	leave
+  400853:	c3                   	ret
+  400854:	66 2e 0f 1f 84 00 00 	cs nop WORD PTR [rax+rax*1+0x0]
+  40085b:	00 00 00
+  40085e:	66 90                	xchg   ax,ax
+```
+
+Assustador, mas not really.
+
+Podemos observar que o `main` lê o nosso input com a função `gets` (`call   400620 <gets@plt>`), o que é uma ideia pessima, pois não tem um limite para ler input do buffer, portanto podemos manipular o programa com um simples input, que é o objetivo da challenge.
+Se olharmos atentamente, existe uma função `funcao_nada_suspeita`, que abre um ficheiro (`call   400650 <open@plt>`), assumi que esta função é a que printa a flag que está no servidor do binário. Mas esta função não é chamada pelo `main`, por isso, como é que resolvemos?
+
+Ok, a ideia é: encher o buffer todo e enviar os bytes que representam o endereço da função `funcao_nada_suspeita`, pois assim conseguimos saltar para essa função e obter a flag.
+
+Começei por descobrir apartir de quantos bytes é que o programa crasha.
+Podemos observar no `main` a seguinte instrução: `sub    rsp,0x50`, por isso assumi que a string ia ser armazenada no stack, com tamanho `0x50 (80)`. Assim sabemos que o buffer enche depois de 80 bytes, depois de várias tentativa-erro, descobri que é apartir de 88 que o programa crasha:
+![challenge](/assets/borda_fora_2.png)
+
+E agora? Vamos experimentar enviar mais bytes:
+![challenge](/assets/borda_fora_3.png)
+
+Podemos observar que o resto do input foi para o stack também, e quando o `main` dá `retn`, ele dá `pop` ao valor que está no stack e armazena em `$rip` (*instruction pointer*). Como nós introduzimos `XXXXXXX (0x5858585858....)`, o programa não consegue continuar pois não existe nenhuma instrução nesse endereço de memória. 
+
+**Portanto, como é que utilizamos isto a nosso favor?** Bem, é só enviarmos o endereço da função que queremos executar (`funcao_nada_suspeita`), portanto o `$rip` vai ter um valor válido e o programa continuará e mostrará a flag.
+
+Se executarmos `disas funcao_nada_suspeita` no gdb:
+```
+Dump of assembler code for function funcao_nada_suspeita:
+   0x0000000000400757 <+0>:	push   rbp
+   0x0000000000400758 <+1>:	mov    rbp,rsp
+   .....
+```
+Sabemos que a função começa em `0x0000000000400757`, mas 1º precisamos de saber se o binário utiliza little-endian ou big-endian, por isso utilizamos o comando `file`:
+```
+$ file borda_fora
+borda_fora: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, BuildID[sha1]=3063c552547e261d582f295694edb3ac275265e3, not stripped
+``` 
+"LSB" significa Least significant Byte, portanto é little-endian, temos que enviar nesta ordem: `\x57\x07\x40\x00\x00\x00\x00\x00`.
+
+Para isto, fiz um simples script em python, utilizando a lib `pwntools`.
+
+```py
+```
+
+Resultado:
+```
+```

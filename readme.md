@@ -18,14 +18,14 @@ Foi o nosso 1º contacto com CTF's! Portanto as nossas soluções **não são as
 
 ### forensics
 - Nem tudo é o que parece [[Solved]](#) 
-- Poema de neve [[Solved]](#)
+- Poema de neve [[Solução]](#poema_de_neve)
 - Receita do Doutor
 - HSB Em Estreóides
 
 ### rev
 - Introdução GDB [[Solução]](#introdução-gdb)
 - Estás a olhar? [[Solução]](#estás-a-olhar)
-- Nunca me Reverás [[Solved]](#nunca-me-reverás)
+- Nunca me Reverás [[Solução]](#nunca-me-reverás)
 - Rede Neuronal Personalizada
 - Encontra o Caminho
 
@@ -45,9 +45,9 @@ Foi o nosso 1º contacto com CTF's! Portanto as nossas soluções **não são as
 - RAM Fugitivo [[Solved]](#)
   
 ### misc
-- Sanity check [[Solved]](#)
-- Amigos Dobráveis [[Solved]](#)
-- HS Jail [[Solved]](#)
+- Sanity check [[Solução]](#sanity_check)
+- Amigos Dobráveis [[Solução]](#amigos-dobráveis)
+- HS Jail [[Solução]](#hs-jail)
 - Testamento
 - Detetor de Palavrões
 - HS Jail 3
@@ -65,6 +65,7 @@ Foi o nosso 1º contacto com CTF's! Portanto as nossas soluções **não são as
 - DEHS
 
 # Soluções
+
 
 ## rev
 ### Introdução GDB
@@ -233,6 +234,8 @@ Acabei por descobrir no final da competição que era só executar `strings -n 2
 
 
 ## Nunca me Reverás
+![challenge](/assets/nunca_me_reveras.png)
+
 
 ```bash
 $ ./reveras
@@ -309,7 +312,6 @@ Ficou algo deste género:
 ```c
 for (int i = 0; i <= 26; ++i)
     {
-        v6 = input[i];
         auto n = (int)(next(i));
 
         int count = 0; // obter só o primeiro char
@@ -335,6 +337,7 @@ for (int i = 0; i <= 26; ++i)
 Flag: `��{hmmmmmmmmmmmmmmmmmmmmmm}`
 
 Não sei porquê é que a parte inicial aparece assim, mas o importante é que a flag funcionou!
+
 
 ## pwn
 ### Borda Fora
@@ -500,3 +503,47 @@ HS{tH3_buff3r_flow}
 ```
 
 Flag: `HS{tH3_buff3r_flow}`
+
+
+## misc
+
+### Sanity Check
+![challenge](/assets/sanity_check.png)
+
+Esta foi só procurar nos canais de discord do servidor.
+![challenge](/assets/sanity_check_2.png)
+
+Flag: `HS{d1sc0rd_fl4g?}`
+
+### Amigos Dobráveis
+![challenge](/assets/amigos_dobraveis.png)
+
+Fui simplesmente pesquisar por origami simulator online, e meter o ficheiro lá:
+![challenge](/assets/amigos_dobraveis_2.png)
+
+Flag: `HS{HELP}`
+
+### HS Jail
+![challenge](/assets/hs_jail.png)
+
+Depois de alguma pesquisa e tentativa-erro, o comando é `help`, portanto `help(flag)` é a solução.
+![challenge](/assets/helpflag.png)
+
+Flag: `HS{did_you_get_help?_0r_n0t??}`
+
+
+## forensics
+
+### Poema de neve
+![challenge](/assets/poema_de_neve.png)
+
+Perdemos bastante tempo com este... No ínicio reparamos nos espaços no final de cada linha e pensávamos que era código morse ou assim... Mas não estávamos a conseguir relacionar a palavra "neve" da hint.
+
+Depois de alguma pesquisa, descobrimos a tool `snow`, que é usada para steganography, mais concreto, esconder mensagens secretas com espaços.
+
+```bash
+$ snow -C poema_neve.txt
+HS{n3v3_n3v3_0h_4_b3l4_n3v3_qu3_m3_3sp4nt4s}
+```
+
+Flag: `HS{n3v3_n3v3_0h_4_b3l4_n3v3_qu3_m3_3sp4nt4s}`

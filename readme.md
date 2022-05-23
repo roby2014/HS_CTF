@@ -228,7 +228,7 @@ Portanto, olhei para `mov    DWORD PTR [rbp-0x12],0x7b5348` e fui converter `0x7
 0x3f3f74  ->  \x3f\x3f\x74 = ??t  ->  \x74\x3f\x3f = t??
 0x7d3f    ->  \x7d\x3f     = }?   ->  \x3f\x7d     = ?}
 ```
-Flag: `{HS{w41t_s0_str1ngs_w0rks_0r_n0t???}`
+Flag: `HS{w41t_s0_str1ngs_w0rks_0r_n0t???}`
 
 Acabei por descobrir no final da competição que era só executar `strings -n 2` LOL.
 

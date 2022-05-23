@@ -1,8 +1,7 @@
 # HackerSchool CTF writeups (PT)
+## Em construção....
 
 [Weekend CTF Tournament (21 & 22 de maio 2022)](https://ctf.hackerschool.io)
-
-
 
 ## Info
 Este repo contem alguns writeups das nossas soluções nas CTF's da HS.
@@ -11,8 +10,8 @@ Este repo contem alguns writeups das nossas soluções nas CTF's da HS.
 - Equipa: 888海日人,,
     - [roby](https://github.com/roby2014)
     - [mura](https://github.com/)
-    - [kardoso](https://github.com/)
-    - [sn0wygecko](https://github.com/) 
+    - [kardoso](https://github.com/diogocardoso28)
+    - [sn0wygecko](https://github.com/eduardoervideira) 
 
 ## Challenges ([link](https://ctf.hackerschool.io/challenges))
 
@@ -24,7 +23,7 @@ Este repo contem alguns writeups das nossas soluções nas CTF's da HS.
 
 ### rev
 - Introdução GDB [[Solução]](#introdução-gdb)
-- Estás a olhar? [[Solved]](#)
+- Estás a olhar? [[Solução]](#estás-a-olhar)
 - Nunca me Reverás [[Solved]](#)
 - Rede Neuronal Personalizada
 - Encontra o Caminho
@@ -54,7 +53,6 @@ Este repo contem alguns writeups das nossas soluções nas CTF's da HS.
 - HS Jail 2
 - HS Bem Temperada
 
-
 ### crypto
 - Sanity RSA
 - RSA Pequena
@@ -65,12 +63,19 @@ Este repo contem alguns writeups das nossas soluções nas CTF's da HS.
 - Diabólico polinómio
 - DEHS
 
-## Soluções
+# Soluções
 
-### Introdução GDB
+## Introdução GDB
 ![challenge](/assets/introducao_gdb.png)
 
-Eu sei que o objetivo era, como o título diz, utiliar o GDB, mas antes de saltar para essa parte, utilizei o comando `strings` para ver se conseguia encontrar a string crua no binário.
+```
+$ ./introducao_gdb
+Bem-vindo! Fiz um pequeno verificador de passwords eheh, consegues adivinhar?
+ola
+Hey! Isso não está bem, ai ai ai :(  
+```
+
+Eu sei que o objetivo era, como o título diz, utilizar o GDB, mas antes de saltar para essa parte, utilizei o comando `strings` para ver se conseguia encontrar a string crua no binário.
 Utilizando `strings introducao_gdb`, consegui encontrar:
 ```
 HS{y3yyyH
@@ -152,3 +157,75 @@ O que consigo interpretar é, fazemos uma comparação e caso seja igual (`je` *
 Se metermos um breakpoint antes de saltar (`b *0x0000555555555211`), podemos observar o seguinte:
 ![challenge](/assets/introducao_gdb_2.png)
 Boom, a string está vísivel no stack.
+
+## Estás a olhar?
+![challenge](/assets/estas_a_olhar.png)
+
+```
+$ ./estas_a_olhar
+Flag aqui? nunca #HS 
+```
+
+Desta vez, o objetivo era utilizar o comando `strings` mesmo, mas depois de não sei quanto tempo a experimentar os vários argumentos, não consegui chegar lá só com o comando.
+Portanto armei-me em trolha e fui dar disassembly ao binário:
+
+`objdump estas_a_olhar -d -M intel` 
+*(intel syntax porque ATT dá-me dores de cabeça)*
+
+Olhando para a função main, temos o seguinte:
+```
+0000000000001135 <main>:
+    1135:	55                   	push   rbp
+    1136:	48 89 e5             	mov    rbp,rsp
+    1139:	48 83 ec 50          	sub    rsp,0x50
+    113d:	48 c7 45 f2 00 00 00 	mov    QWORD PTR [rbp-0xe],0x0
+    1144:	00
+    1145:	c7 45 fa 00 00 00 00 	mov    DWORD PTR [rbp-0x6],0x0
+    114c:	66 c7 45 fe 00 00    	mov    WORD PTR [rbp-0x2],0x0
+    1152:	c7 45 ee 48 53 7b 00 	mov    DWORD PTR [rbp-0x12],0x7b5348
+    1159:	c7 45 ea 77 34 31 00 	mov    DWORD PTR [rbp-0x16],0x313477
+    1160:	c7 45 e6 74 5f 73 00 	mov    DWORD PTR [rbp-0x1a],0x735f74
+    1167:	c7 45 e2 30 5f 00 00 	mov    DWORD PTR [rbp-0x1e],0x5f30
+    116e:	c7 45 de 73 74 72 00 	mov    DWORD PTR [rbp-0x22],0x727473
+    1175:	c7 45 da 31 6e 67 00 	mov    DWORD PTR [rbp-0x26],0x676e31
+    117c:	c7 45 d6 73 5f 77 00 	mov    DWORD PTR [rbp-0x2a],0x775f73
+    1183:	c7 45 d2 30 72 00 00 	mov    DWORD PTR [rbp-0x2e],0x7230
+    118a:	c7 45 ce 6b 73 5f 00 	mov    DWORD PTR [rbp-0x32],0x5f736b
+    1191:	c7 45 ca 30 72 00 00 	mov    DWORD PTR [rbp-0x36],0x7230
+    1198:	c7 45 c6 5f 6e 30 00 	mov    DWORD PTR [rbp-0x3a],0x306e5f
+    119f:	c7 45 c2 74 3f 3f 00 	mov    DWORD PTR [rbp-0x3e],0x3f3f74
+    11a6:	c7 45 be 3f 7d 00 00 	mov    DWORD PTR [rbp-0x42],0x7d3f
+    11ad:	48 8d 3d 50 0e 00 00 	lea    rdi,[rip+0xe50]        # 2004 <_IO_stdin_used+0x4>
+    11b4:	b8 00 00 00 00       	mov    eax,0x0
+    11b9:	e8 72 fe ff ff       	call   1030 <printf@plt>
+    11be:	90                   	nop
+    11bf:	c9                   	leave
+    11c0:	c3                   	ret
+    11c1:	66 2e 0f 1f 84 00 00 	cs nop WORD PTR [rax+rax*1+0x0]
+    11c8:	00 00 00
+    11cb:	0f 1f 44 00 00       	nop    DWORD PTR [rax+rax*1+0x0]
+```
+
+OK, e agora????
+
+Reparei que antes de `call   1030 <printf@plt>` (suponho que seja a instrução que printa o *"Flag aqui? nunca #HS"*), temos muitos `movs` de valores estranhos em hex.
+Portanto, olhei para `mov    DWORD PTR [rbp-0x12],0x7b5348` e fui converter `0x7b5348` para texto, o resultado foi `{SH`, que por acaso, é o ínicio do formato da flag (`HS{.....}`). Depois disto, percebi que a flag está separada pelas várias instruções em valor hexadecimal (em little-endian! Temos que inverter a ordem dos bytes), portanto fui converter todos os valores (xD):
+```
+0x7b5348  ->  \x7b\x53\x48 = {SH  ->  \x48\x53\x7b = HS{
+0x313477  ->  \x31\x34\x77 = 14w  ->  \x77\x34\x31 = w41
+0x735f74  ->  \x73\x5f\x74 = s_t  ->  \x74\x5f\x73 = t_s
+0x5f30    ->  \x5f\x30     = _0   ->  \x30\x5f     = 0_
+0x727473  ->  \x72\x74\x73 = rts  ->  \x73\x74\x72 = str
+0x676e31  ->  \x67\x6e\x31 = gn1  ->  \x31\x63\x67 = 1ng
+0x775f73  ->  \x77\x5f\x73 = w_s  ->  \x73\x5f\x77 = s_w
+0x7230    ->  \x72\x30     = r0   ->  \x30\x72     = 0r
+0x5f736b  ->  \x5f\x73\x6b = _sk  ->  \x6b\x73\x5f = ks_
+0x7230    ->  \x72\x30     = r0   ->  \x30\x72     = 0r
+0x306e5f  ->  \x30\x6e\x5f = 0n_  ->  \x5f\x6e\x30 = _n0
+0x3f3f74  ->  \x3f\x3f\x74 = ??t  ->  \x74\x3f\x3f = t??
+0x7d3f    ->  \x7d\x3f     = }?   ->  \x3f\x7d     = ?}
+```
+Resultado final: `{HS{w41t_s0_str1ngs_w0rks_0r_n0t???}`
+
+Acabei por descobrir no final da competição que era só executar `strings -n 2` LOL.
+
